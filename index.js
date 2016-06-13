@@ -3,6 +3,7 @@ var exec = require('child_process').exec;
 var path = require('path').resolve();
 var extend = require('util')._extend;
 
+
 module.exports.init = function(opt) {
 
   var config = {
@@ -18,7 +19,6 @@ module.exports.init = function(opt) {
   extend(config, opt);
 
   app.all('/', function(req, res) {
-
     try {
       var json = JSON.parse(Object.keys(req.body)[0]);
     } catch (e) {
@@ -33,7 +33,7 @@ module.exports.init = function(opt) {
     }
 
     if (
-      config.token === req.query.token &&
+      config.token === req.headers["x-gitlab-token"] &&
       config.events.indexOf(json.object_kind) !== -1 &&
       config.branches.indexOf(branch) !== -1
     ) {
@@ -47,7 +47,12 @@ module.exports.init = function(opt) {
       });
 
     } else {
-      res.status(400).send({ status: 'Bad request' });
+      var err = "";
+      if (config.token !== req.query.token) err += "Invalid Token.";
+      if (config.events.indexOf(json.object_kind) == -1) err += "Invalid JSON. Got '" + json.object_kind + "'.";
+      if (config.branches.indexOf(branch) == -1) err += "Branch '" + branch + "' not in list of branches. Active Branches: " + config.branches;
+
+      res.status(400).send({ status: err });
     }
   });
 
