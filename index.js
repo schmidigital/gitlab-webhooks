@@ -39,12 +39,19 @@ module.exports.init = function(opt) {
     ) {
 
       res.status(200).send({status: 'OK'});
+      
+      var do_nothing = false;
+      
+      if (json.object_kind === 'build' && json.build_status !== 'success')
+        do_nothing = true;
 
       if (typeof config.onEvent === 'function') config.onEvent();
 
-      exec(config.command, function(err, stdout, stderr) {
-        if (config.exit) process.exit(0);
-      });
+      if (!do_nothing) {
+        exec(config.command, function(err, stdout, stderr) {
+          if (config.exit) process.exit(0);
+        });
+      }
 
     } else {
       var err = "";
